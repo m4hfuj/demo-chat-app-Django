@@ -7,7 +7,8 @@ https://learndjango.com/tutorials/django-login-and-logout-tutorial
 ## Step 2:
 Create a chatapp and add
 
-Add Consumers.py
+### Add Consumers.py
+
     # chatapp/Consumers.py
     import json
     from channels.generic.websocket import AsyncWebsocketConsumer
@@ -16,8 +17,6 @@ Add Consumers.py
         async def connect(self):
             self.room_name = self.scope['url_route']['kwargs']['room_slug']
             self.roomGroupName = f'chat_{self.room_name}'
-    
-            # self.roomGroupName = "group_chat_gfg"
     
             await self.channel_layer.group_add(
                 self.roomGroupName ,
@@ -48,7 +47,7 @@ Add Consumers.py
             await self.send(text_data = json.dumps({"message":message, "username":username}))
 
 
-Add Routing.py
+### Add Routing.py
 
     # chatapp/Routing.py
     from django.urls import path , include, re_path
@@ -60,3 +59,47 @@ Add Routing.py
         # path("/ws/<room_slug>/" , ChatConsumer.as_asgi()) , 
         re_path(r'^ws/(?P<room_slug>[^/]+)/$', ChatConsumer.as_asgi()),
     ]
+
+
+### Add asgi.py
+
+    # core.asgi.py
+    import os
+    from django.core.asgi import get_asgi_application
+    
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ChatApp.settings')
+    
+    from channels.auth import AuthMiddlewareStack
+    from channels.routing import ProtocolTypeRouter , URLRouter
+    from chatapp import routing
+    
+    application = ProtocolTypeRouter(
+        {
+            "http" : get_asgi_application() , 
+            "websocket" : AuthMiddlewareStack(
+                URLRouter(
+                    routing.websocket_urlpatterns
+                )    
+            )
+        }
+    )
+
+
+### Add in settings.py
+
+    INSTALLED_APPS = [
+        'daphne',
+        'channels',
+        
+        ................
+        
+        'chatapp'
+    ]
+
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer"
+        }
+    }
+
+    ASGI_APPLICATION = 'core.asgi.application'
