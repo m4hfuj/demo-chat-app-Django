@@ -1,5 +1,7 @@
 # demo-chat-app
 
+![My Image](./demo-chat-app-backend/chatapp.png)
+
 ## Step 1:
 A simple authorization from here
 https://learndjango.com/tutorials/django-login-and-logout-tutorial
@@ -56,7 +58,6 @@ Create a chatapp and add
     # Here, "" is routing to the URL ChatConsumer which 
     # will handle the chat functionality.
     websocket_urlpatterns = [
-        # path("/ws/<room_slug>/" , ChatConsumer.as_asgi()) , 
         re_path(r'^ws/(?P<room_slug>[^/]+)/$', ChatConsumer.as_asgi()),
     ]
 
