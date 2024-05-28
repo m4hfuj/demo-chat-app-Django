@@ -1,4 +1,5 @@
 # demo-chat-app
+A demo chat app using websocket in django
 
 ![My Image](./demo-chat-app-backend/chatapp.png)
 
@@ -8,6 +9,64 @@ https://learndjango.com/tutorials/django-login-and-logout-tutorial
 
 ## Step 2:
 Create a chatapp and add
+
+
+### Add in settings.py
+
+    INSTALLED_APPS = [
+        'daphne',
+        'channels',
+        
+        ................
+        
+        'chatapp'
+    ]
+
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer"
+        }
+    }
+
+    ASGI_APPLICATION = 'core.asgi.application'
+
+
+### Add asgi.py
+
+    # core.asgi.py
+    import os
+    from django.core.asgi import get_asgi_application
+    
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ChatApp.settings')
+    
+    from channels.auth import AuthMiddlewareStack
+    from channels.routing import ProtocolTypeRouter , URLRouter
+    from chatapp import routing
+    
+    application = ProtocolTypeRouter(
+        {
+            "http" : get_asgi_application() , 
+            "websocket" : AuthMiddlewareStack(
+                URLRouter(
+                    routing.websocket_urlpatterns
+                )    
+            )
+        }
+    )
+
+
+### Add Routing.py
+
+    # chatapp/Routing.py
+    from django.urls import path , include, re_path
+    from .consumers import ChatConsumer
+    
+    # Here, "" is routing to the URL ChatConsumer which 
+    # will handle the chat functionality.
+    websocket_urlpatterns = [
+        re_path(r'^ws/(?P<room_slug>[^/]+)/$', ChatConsumer.as_asgi()),
+    ]
+
 
 ### Add Consumers.py
 
@@ -49,58 +108,7 @@ Create a chatapp and add
             await self.send(text_data = json.dumps({"message":message, "username":username}))
 
 
-### Add Routing.py
-
-    # chatapp/Routing.py
-    from django.urls import path , include, re_path
-    from .consumers import ChatConsumer
-    
-    # Here, "" is routing to the URL ChatConsumer which 
-    # will handle the chat functionality.
-    websocket_urlpatterns = [
-        re_path(r'^ws/(?P<room_slug>[^/]+)/$', ChatConsumer.as_asgi()),
-    ]
 
 
-### Add asgi.py
-
-    # core.asgi.py
-    import os
-    from django.core.asgi import get_asgi_application
-    
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ChatApp.settings')
-    
-    from channels.auth import AuthMiddlewareStack
-    from channels.routing import ProtocolTypeRouter , URLRouter
-    from chatapp import routing
-    
-    application = ProtocolTypeRouter(
-        {
-            "http" : get_asgi_application() , 
-            "websocket" : AuthMiddlewareStack(
-                URLRouter(
-                    routing.websocket_urlpatterns
-                )    
-            )
-        }
-    )
 
 
-### Add in settings.py
-
-    INSTALLED_APPS = [
-        'daphne',
-        'channels',
-        
-        ................
-        
-        'chatapp'
-    ]
-
-    CHANNEL_LAYERS = {
-        "default": {
-            "BACKEND": "channels.layers.InMemoryChannelLayer"
-        }
-    }
-
-    ASGI_APPLICATION = 'core.asgi.application'
