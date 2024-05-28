@@ -33,7 +33,7 @@ Create a chatapp and add
 
 ### Add asgi.py
 
-    # core.asgi.py
+    # core/asgi.py
     import os
     from django.core.asgi import get_asgi_application
     
